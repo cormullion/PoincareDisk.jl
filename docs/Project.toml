@@ -1,0 +1,12 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
+DocumenterLandingPage = "1c52b33b-3e2f-4e99-b3b5-a6ad63f0d6d2"
+DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
+Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
+PoincareDisk = "37d8f618-38b6-5c23-b72c-a3f6e67e6ed5"
+
+[compat]
+Documenter = "1.17"
+Luxor = "4"
