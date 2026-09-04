@@ -13,7 +13,7 @@ hero:
   actions:
     - theme: brand
       text: Basic usage
-      link: /basics.html
+      link: /basics
     - theme: alt
       text: View on GitHub
       link: https://github.com/cormullion/PoincareDisk.jl
