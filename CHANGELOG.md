@@ -1,5 +1,6 @@
 # CHANGELOG
 
-## [Unreleased]
+## [Release 0.1.0]
 
-- no releases yet
+- first release
+

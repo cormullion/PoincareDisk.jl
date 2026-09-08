@@ -56,11 +56,11 @@ features:
 
 # Installation
 
-This package isn't registered. Install it by typing this in the Julia REPL:
+Install it by typing this in the Julia REPL:
 
 ```julia-repl
 julia> import Pkg
-julia> Pkg.add("https://github.com/cormullion/PoincareDisk.jl")
+julia> Pkg.add("PoincareDisk")
 ```
 
 ## Documentation

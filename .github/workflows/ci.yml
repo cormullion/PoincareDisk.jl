@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+    tags: '*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - 'lts'  # latest LTS
+          - '1'
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x64]
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@latest
+        with:
+          project: PoincareDisk
+      - uses: julia-actions/julia-runtest@latest
+        with:
+          project: PoincareDisk
+      - uses: julia-actions/julia-processcoverage@latest
+        with:
+          directories: PoincareDisk/src
+      - uses: codecov/codecov-action@v5
+        with:
+          file: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1'
+      - run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      - run: |
+          julia --project=docs -e '
+            import Documenter, Colors, Luxor, PoincareDisk
+            Documenter.doctest(joinpath(@__DIR__, "docs", "src"), [PoincareDisk])
+          '
+      - run: julia --project=docs docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
