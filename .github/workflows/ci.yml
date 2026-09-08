@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
+        julia-version:
           - 'lts'  # latest LTS
           - '1'
         os: [ubuntu-latest, windows-latest, macos-latest]
