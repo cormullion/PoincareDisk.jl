@@ -4,7 +4,7 @@ This package lets you draw hyperbolic geometry using the Poincaré disk model.
 
 ## The Poincaré disk
 
-The Poincaré disk is a two-dimensional hyperbolic plane. It provides a surface on which you can draw using *non-Euclidean geometry*, in which most of Euclid's geometric postulates apply, but the final (fifth, "parallel") postulate doesn't. You'll have no trouble finding explanatory material on the internet!
+The Poincaré disk is a two-dimensional hyperbolic plane. It provides a surface on which you can draw using *non-Euclidean geometry*. Here, most of Euclid's geometric postulates apply, but the final (fifth, "parallel") postulate doesn't. You'll have no trouble finding explanatory material on the internet!
 
 In the Poincaré disk model, the shortest path between two points is drawn as a circular arc called a *geodesic*. The internal angles of triangles add up to less than 180°. Hyperbolic circles are represented as Euclidean circles contained entirely inside the disk.
 
@@ -35,11 +35,11 @@ d # hide
 
 !!! note
 
-    Famous French mathematician and physicist Henri Poincaré (1854–1912) popularized the hyperbolic disk model in 1905 and it now carries his name. However, this was really a rediscovery of the original work of Eugenio Beltrami some decades earlier.
+    Famous French mathematician and physicist Henri Poincaré (1854–1912) popularized the hyperbolic disk model in 1905 and it now carries his name. However, it was really a rediscovery of the original work of Eugenio Beltrami some decades earlier.
 
 ## Overview
 
-Points on the Poincaré disk are represented as complex numbers `z`, where `|z| < 1`. 
+Points on the Poincaré disk are represented as complex numbers `z`, where `|z| < 1`.
 
 The disk is a *unit disk*, with `(0 + 0im)` at the center. The four
 cardinal points (E, S, W, and N) are:
@@ -61,8 +61,11 @@ using Luxor
     p3 = -1.0 + 0.0im # W
     p4 = 0 - 1.0im    # N
     sethue("cyan")
+    fontsize(30)
     circle.(complex_to_point.([p1, p2, p3, p4]), 5, :fill)
-    label.(["E", "S", "W", "N"], [:w, :n, :e, :s], complex_to_point.([p1, p2, p3, p4]))
+    label.(["E", "S", "W", "N"], [:w, :n, :e, :s], 
+        complex_to_point.([p1, p2, p3, p4]), 
+        offset=20.0)
 end
 ```
 
@@ -109,7 +112,7 @@ end
 
 ### The `cis()` function
 
-In Julia you can use the `cis()` function to generate complex numbers. It provides a more efficient method for `exp(im * x)`.
+In Julia you can use the `cis()` function to generate complex numbers. It calculates $\exp(i x)$ using Euler's formula, $\cos(x) + i \sin(x)$.
 
 ```@example
 using PoincareDisk
@@ -132,9 +135,9 @@ end
 
 You can add graphics for the Poincaré disk itself with:
 
-[`draw_poincare_disk(action=:fill)`](@ref)
+[`draw_poincare_disk()`](@ref)
 
-The size of the disk (in terms of the Luxor drawing) is determined by the global constant `DEFAULT_DISK_RADIUS`, which is initially set to 295.0 (so that the Poincare disk fits neatly on the default Luxor drawing size of 600 × 600). The default action is `:stroke`.
+The size of the disk (in terms of the Luxor drawing) is determined by the global constant `DEFAULT_DISK_RADIUS`, which is initially set to 295.0 (so that the Poincare disk fits neatly on the default Luxor drawing size of 600 × 600). The default action is `:stroke`, or you can draw a filled disk with `:fill`.
 
 ## Hyperbolic lines
 
@@ -152,7 +155,7 @@ using Colors
 @drawsvg begin
     sethue("grey10")
     draw_poincare_disk(action = :fill)
-    setline(2)
+    setline(4)
     z1 = 0.999999 * exp(π / 2 * im)
     for θ in range(0, 2π - 2π / 50, length = 50)
         sethue(Oklch(0.6, 0.6, 360rescale(θ, 0, 2π)))
@@ -163,7 +166,7 @@ using Colors
 end
 ```
 
-The `complex_to_point(z)` function converts from disk coordinate to Luxor drawing coordinates, so we can draw a circular dot using `Luxor.circle()` to mark the end point.
+The `complex_to_point(z)` function converts from disk coordinates to Luxor drawing coordinates, so we can draw a circular dot using `Luxor.circle()` to mark the end point.
 
 ## Hyperbolic circles
 
@@ -176,23 +179,22 @@ Notice in the next example that the two hyperbolic circles have the same hyperbo
 ```@example
 using PoincareDisk 
 using Luxor 
-using Colors 
 @drawsvg begin 
 sethue("grey15")
 draw_poincare_disk(action = :fill)
-
+setline(5)
 setopacity(0.6)
 sethue("magenta")
-zc = 0.7cis(π / 2)
+zc = 0.85cis(π / 2)
 hyperbolic_circle(zc, 0.9) # default action is :stroke
 
 sethue("cyan")
 zc = 0.3cis(π / 2)
-hyperbolic_circle(zc, 0.9, action = :fill)
+hyperbolic_circle(zc, 0.9, action = :stroke)
 end
 ```
 
-Here's a slightly more interesting example, that explores the idea that hyperbolic circles with the same designated 'radius' (here `0.3`) look different depending on their distance from the center of the Poincaré disk.
+Here's a slightly more interesting example that explores the idea that hyperbolic circles with the same designated 'radius' (here `0.3`) look different depending on their distance from the center of the Poincaré disk.
 
 ```@example
 using PoincareDisk 
@@ -202,9 +204,10 @@ using Colors
 @drawsvg begin 
     sethue("grey15")
     draw_poincare_disk(action = :fill)
-    setopacity(0.6)
-    for k in range(0.1, 0.9, length = 20)
-        for angle in [0, π / 2, π, 3π / 2]
+    setopacity(0.5)
+    setline(1)
+    for k in range(0.1, 0.95, length = 50)
+        for angle in range(0, 2π - 2π/7, length=7)
             sethue(Oklch(0.5, 0.5, 360k))
             zc = k * cis(angle)
             hyperbolic_circle(zc, 0.3, action = :fillpreserve)
@@ -221,34 +224,36 @@ The `hyperbolic_poly()` function constructs and draws a hyperbolic polygon. Each
 
 This function expects an array of complex number coordinates. 
 
-In this example, we use a simple function that generates an array of random positions on the disk.
+In the next example, we generate arrays of three random positions on the edge of the disk.
 
 ```@example
+using PoincareDisk
+using Luxor
+using Colors
+
 using PoincareDisk # hide
 using Luxor # hide
 using Colors # hide
 using Random # hide
 
-Random.seed!(42) # hide
+Random.seed!(62)
 
-function random_point_in_disk(r_max = 0.5)
-    θ = 2π * rand()
-    r = r_max * sqrt(rand()) 
-    return r * exp(im * θ)
+@drawsvg begin
+    sethue("grey15")
+    draw_poincare_disk(action = :fill)
+    setopacity(0.7)
+    for i in 1:6
+        z = Complex[]
+        push!(z, 0.99cis(rand() * π))
+        push!(z, 0.99cis(rand() * 3π / 2))
+        push!(z, 0.99cis(rand() * 2π))
+        Random.shuffle!(z)
+        randomhue()
+        hyperbolic_poly(z, action = :fillpreserve)
+        sethue("white")
+        strokepath()
+    end
 end
-
-@drawsvg begin # hide
-sethue("grey15")
-draw_poincare_disk(action = :fill)
-setopacity(0.7)
-for i in 1:10
-    z = [random_point_in_disk(0.9) for _ in 1:3]
-    randomhue()
-    hyperbolic_poly(z, action = :fillpreserve)
-    sethue("white")
-    strokepath()
-end
-end # hide
 ```
 
 In the next example, we generate a polar grid of boxes, and render each one as a hyperbolic polygon.
@@ -317,5 +322,26 @@ for i in 0.1:0.1:6
     vs = regular_hyperbolic_poly(5, i, rotation = -π/2)
     hyperbolic_poly(vs, action=:stroke)
 end
+end # hide
+```
+
+The `hcenter=` keyword lets you center the polygon anywhere on the disk:
+
+```@example
+using PoincareDisk # hide
+using Luxor # hide
+
+@drawsvg begin # hide
+    sethue("grey10")
+    draw_poincare_disk(action = :fill)
+    setline(1)
+    sethue("white")
+    L = 6
+    for i in 0.1:0.1:1.6
+        for pc in [0.7 * cis(θ) for θ in range(0, 2π - 2π / L, length = L)]
+            vs = regular_hyperbolic_poly(6, i, hcenter = pc)
+            hyperbolic_poly(vs, action = :stroke)
+        end
+    end
 end # hide
 ```
