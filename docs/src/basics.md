@@ -22,8 +22,7 @@ d = Drawing(600, 600, :png)
     tiles = hyperbolic_tiling(3, 1000)
     sethue("white")
     for (tile, _) in tiles
-        pts = hyperbolic_poly(tile, action=:none)
-        poly(pts, :stroke)
+        hyperbolic_poly(tile, action=:stroke)
     end
 finish()
 preview()

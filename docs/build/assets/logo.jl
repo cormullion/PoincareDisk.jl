@@ -34,7 +34,7 @@ sethue("grey20")
 paint()
 tiles = hyperbolic_tiling(
     3, 8;
-    depth = 6,
+    depth = 8,
     hcenter = 0.0 + 0.0im,
     rotation = π / 2,
     maxtiles = 400
@@ -44,9 +44,12 @@ setline(1)
 setlinejoin("bevel")
 for (tile, g) in tiles
     sethue([Luxor.julia_red, Luxor.julia_green, Luxor.julia_purple][mod1(g, end)])
-    pts = hyperbolic_poly(tile, action = :none)
+    hyperbolic_poly(tile, action = :path)
+    # convert to polygon since blend_render wants a polygon
+    pgon = pathtopoly() # returns arrays
+    pts = first(pgon)
     blend_render(pts, getcolor())
-    setline(2)
+    setline(.8)
     sethue("white")
     poly(pts, :stroke, close=true)
 end

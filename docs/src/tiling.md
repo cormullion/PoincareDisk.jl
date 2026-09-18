@@ -140,7 +140,8 @@ tiles = hyperbolic_tiling(5, 4;
     maxtiles = 4000) 
 for (tile, _) in tiles
     sethue(Oklch(0.5, 0.3, rand(1:360)))
-    pts = hyperbolic_poly(tile, radius=500, action=:none)        
+    hyperbolic_poly(tile, radius=500, action=:path)
+    pts = first(pathtopoly())       
     blend_render(pts, getcolor(), action=:fillpreserve)
     sethue("white")
     strokepath()
@@ -164,7 +165,9 @@ draw_poincare_disk(action = :fill, radius = 500)
 tiles = hyperbolic_tiling(3, 10, depth=10, rotation = π/2)
 setline(3)
 for (tile, g) in tiles
-    pts = hyperbolic_poly(tile, action=:none, steps = 30, radius = 500)
+    hyperbolic_poly(tile, action=:path, radius = 500)
+    # convert path to points
+    pts = first(pathtopoly())
     pc = polycentroid(pts)
     dist = distance(pc, O)
     sethue(Oklch(0.7, 0.6, rescale(dist, 0, boxdiagonal(BoundingBox())/2, 0, 360)))
@@ -201,7 +204,8 @@ tiles = hyperbolic_tiling(
     maxtiles = 2000
 )
 for (tile, _) in tiles
-    pts = hyperbolic_poly(tile, radius = 500, action = :none)
+    hyperbolic_poly(tile, radius = 500, action = :none)
+    pts = first(pathtopoly())
     sl = slope(O, pts[length(pts) ÷ 2 - 1])
     @layer begin
         poly(pts, :clip)
