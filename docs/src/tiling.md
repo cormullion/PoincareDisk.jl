@@ -43,7 +43,6 @@ The provided `draw_tiling()` function also provides a few keywords:
 - `radius=DEFAULT_DISK_RADIUS`
 - `diskcenter=O`
 - `action=:stroke`
-- `steps=16`
 - `colors=nothing`
 
 # Tiling specifications
@@ -98,7 +97,7 @@ The `hyperbolic_poly()` function returns the Luxor coordinates for the tile's bo
 
 !!! note
 
-    If you use SVG drawings, be careful as you increase the depth of the tiling - the files can get very large, and the edges can get very ragged, since the coordinates are so small. The `steps=` keyword for `hyperbolic_poly` might be useful to reduce any unnecessary detail.
+    If you use SVG drawings, be careful as you increase the depth of the tiling - the files can get very large, and the edges can get very ragged, since the coordinates are so small.
 
 The next example defines a coloured blend for each tile. 
 

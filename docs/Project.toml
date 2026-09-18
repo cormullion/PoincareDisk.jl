@@ -8,6 +8,9 @@ LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
 PoincareDisk = "37d8f618-38b6-5c23-b72c-a3f6e67e6ed5"
 
+[sources]
+PoincareDisk = {path = "/Users/pete/.julia/dev/PoincareDisk.jl"}
+
 [compat]
 Colors = "0.12, 0.13"
 Documenter = "1.17"

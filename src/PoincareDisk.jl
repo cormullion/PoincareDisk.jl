@@ -81,67 +81,57 @@ function hyperbolic_distance(a, b)
 end
 
 """
-    _arc_angles_avoiding(theta_a, theta_b, theta_x; steps=60)
+    _geodesic_arc_info(a, b; radius=DEFAULT_DISK_RADIUS, diskcenter=O)
 
-Make an array of `steps` angles that start at `theta_a` and go 
-round in a circle `theta_b`, taking the direction that
-doesn't pass through `theta_x`.
+Build the hyperbolic geodesic that joins disk
+points `a` and `b`. It can either be a circular arc or a
+straight line. THe straight line case happens when  `a` and `b`
+form a diagonal.
+
+Returns one of three different results:
+
+- `(:arc, center, r, theta1, theta2)` — the geodesic is
+an arc centered at `center` with radius `r`. The
+arc runs counterclockwise from angle `theta1` to
+`theta2` and does not pass through the excluded point
+(the inversion of `a` in the unit circle).
+
+- `(:carc, center, r, theta1, theta2)` — the geodesic is
+an arc centered at `center` with radius `r`, but the
+non-excluded arc runs *clockwise* from `theta1` to
+`theta2`.
+
+- `(:line, p1, p2)` — `a`, `b`, and the origin are
+  collinear, so the geodesic is just the straight line
+  segment between the points `p1` and `p2`.
+
+The unique circle orthogonal to the unit circle that passes
+through `a` and `b` also passes through `a* = 1/conj(a)`,
+the inversion of `a` in the unit circle. The geodesic arc is
+the arc of the circle through `(a, b, a*)` that avoids `a*`.
 """
-function _arc_angles_avoiding(theta_a, theta_b, theta_x; steps::Int = 60)
-    s = mod2pi(theta_a)
-    e = mod2pi(theta_b)
-    e = e < s ? e + 2π : e
-    x = mod2pi(theta_x)
-    x = x < s ? x + 2π : x
-    if s <= x <= e
-        # direct sweep a -> b passes the excluded angle: use
-        # the complementary arc instead (b -> a), then
-        # reverse it back to a -> b order
-        s2 = mod2pi(theta_b)
-        e2 = mod2pi(theta_a)
-        e2 = e2 < s2 ? e2 + 2π : e2
-        return reverse(range(s2, e2, length = steps))
-    else
-        return range(s, e; length = steps)
-    end
-end
-
-"""
-    _geodesic_points(a, b; 
-        radius=DEFAULT_DISK_RADIUS, 
-        diskcenter=O, 
-        steps=60)
-
-Return `Point`s along the hyperbolic geodesic line joining
-disk points `a` and `b`. 
-
-If `a`, `b` and the origin are collinear, return the two
-endpoints.
-"""
-function _geodesic_points(
+function _geodesic_arc_info(
         a, b;
         radius::Real = DEFAULT_DISK_RADIUS,
-        diskcenter::Point = O, steps::Int = 60
+        diskcenter::Point = O
     )
     a, b = Complex(a), Complex(b)
     (abs(a) >= 1 || abs(b) >= 1) && error(
-        """_geodesic_points():
+        """_geodesic_arc_info():
         The geodesic endpoints must satisfy |z| < 1. You have supplied
         $(abs(a)) and $(abs(b))).
         """
     )
 
-    # a, b and 0 collinear - geodesic is diameter
+    p1 = complex_to_point(a; radius = radius, diskcenter = diskcenter)
+    p2 = complex_to_point(b; radius = radius, diskcenter = diskcenter)
+
+    # a, b and 0 collinear - geodesic is a diameter (straight line)
     if abs(imag(conj(a) * b)) < 1.0e-9
-        return [
-            complex_to_point(a; radius = radius, diskcenter = diskcenter),
-            complex_to_point(b; radius = radius, diskcenter = diskcenter),
-        ]
+        return (:line, p1, p2)
     end
 
     ainv = 1 / conj(a)   # inversion of a in the unit circle
-    p1 = complex_to_point(a; radius = radius, diskcenter = diskcenter)
-    p2 = complex_to_point(b; radius = radius, diskcenter = diskcenter)
     p3 = complex_to_point(ainv; radius = radius, diskcenter = diskcenter)
 
     center, r = center3pts(p1, p2, p3)
@@ -149,8 +139,19 @@ function _geodesic_points(
     theta_b = angle(Complex(p2.x - center.x, p2.y - center.y))
     theta_x = angle(Complex(p3.x - center.x, p3.y - center.y))
 
-    angles = _arc_angles_avoiding(theta_a, theta_b, theta_x; steps = steps)
-    return [Point(center.x + r * cos(t), center.y + r * sin(t)) for t in angles]
+    s = mod2pi(theta_a)
+    e = mod2pi(theta_b)
+    e = e < s ? e + 2π : e
+    x = mod2pi(theta_x)
+    x = x < s ? x + 2π : x
+
+    if s <= x <= e
+        # the direct counterclockwise sweep s -> e passes through the
+        # excluded point, so the wanted arc is the clockwise one instead
+        return (:carc, center, r, s, e)
+    else
+        return (:arc, center, r, s, e)
+    end
 end
 
 """
@@ -194,20 +195,39 @@ end
     hyperbolic_line(z1, z2; 
         radius=DEFAULT_DISK_RADIUS, 
         diskcenter=O, 
-        action=:stroke, 
-        steps=60)
+        action=:stroke)
 
-Make the hyperbolic geodesic line between disk points `z1`
-and `z2`, and apply the Luxor `poly` function with `action`. 
+Construct a new path that makes the hyperbolic geodesic line
+between disk points `z1` and `z2` as a circular arc (or a
+straight line, if they make a diameter) and apply `action`.
 
-Return an array of the coordinates of the points.
+Return the `(center, radius)` of a circle that contains
+the arc, or `(nothing, nothing)` if it's a diameter.
 """
-function hyperbolic_line(
-        z1, z2; radius::Real = DEFAULT_DISK_RADIUS, diskcenter::Point = O,
-        action::Symbol = :stroke, steps::Int = 60
+function hyperbolic_line(z1, z2; 
+        radius::Real = DEFAULT_DISK_RADIUS, 
+        diskcenter::Point = O,
+        action::Symbol = :stroke
     )
-    pts = _geodesic_points(z1, z2; radius = radius, diskcenter = diskcenter, steps = steps)
-    return poly(pts, action, close = false)
+    info = _geodesic_arc_info(z1, z2; radius = radius, diskcenter = diskcenter)
+
+    newpath()
+    if info[1] === :line
+        _, p1, p2 = info
+        move(p1)
+        line(p2)
+        do_action(action)
+        return (nothing, nothing)
+    else
+        kind, center, r, s, e = info
+        move(Point(center.x + r * cos(s), center.y + r * sin(s)))
+        if kind === :arc
+            arc(center, r, s, e, action)
+        else
+            carc(center, r, s, e, action)
+        end
+        return (center, r)
+    end
 end
 
 """
@@ -252,16 +272,17 @@ end
     hyperbolic_poly(vertices; 
         radius=DEFAULT_DISK_RADIUS, 
         diskcenter=O, 
-        action=:stroke, 
-        steps=40)
+        action=:stroke)
 
-Construct the closed hyperbolic polygon with `vertices`, 
-joined by geodesic edges. Use `steps` to define the smoothness of 
-the curve.
+Construct the closed hyperbolic polygon with `vertices`,
+joined by geodesic edges. Each edge is drawn as an exact
+circular arc (or straight line, for diameter edges) rather
+than a sequence of sampled points, by chaining Luxor
+`arc`/`carc`/`line` path segments together.
 
-Apply the Luxor `poly` function to the results, using `action`.
+Apply the Luxor action `action` to the resulting path.
 
-Return the points.
+Return `nothing`.
 
 The unique circle orthogonal to the unit circle that passes
 through `a` and `b` also passes through `a* = 1/conj(a)`,
@@ -274,24 +295,38 @@ radius `rho` is the Euclidean circle of radius
 `tanh(rho/2)`. 
 """
 function hyperbolic_poly(
-        vertices::AbstractVector{<:Number};
+        vertices::Vector{<:Number};
         radius::Real = DEFAULT_DISK_RADIUS,
         diskcenter::Point = O,
-        action::Symbol = :stroke,
-        steps::Int = 40
+        action::Symbol = :stroke
     )
     verts = Complex.(vertices)
     m = length(verts)
     m < 3 && error("a polygon needs at least 3 vertices")
 
-    allpts = Point[]
+    newpath()
+    firstpoint = complex_to_point(verts[1]; radius = radius, diskcenter = diskcenter)
+    move(firstpoint)
+
     for i in 1:m
         a, b = verts[i], verts[mod1(i + 1, m)]
-        edgepts = _geodesic_points(a, b; radius = radius, diskcenter = diskcenter, steps = steps)
-        append!(allpts, i == 1 ? edgepts : edgepts[2:end])
+        info = _geodesic_arc_info(a, b; radius = radius, diskcenter = diskcenter)
+        if info[1] === :line
+            _, _, p2 = info
+            line(p2)
+        else
+            kind, center, r, s, e = info
+            if kind === :arc
+                arc(center, r, s, e, :path)
+            else
+                carc(center, r, s, e, :path)
+            end
+        end
     end
-    pts = poly(allpts, action, close = true)
-    return pts
+
+    closepath()
+    do_action(action)
+    return nothing
 end
 
 """
@@ -469,8 +504,7 @@ end
     draw_tiling(tiles; 
         radius=DEFAULT_DISK_RADIUS, 
         diskcenter=O, 
-        action=:stroke, 
-        steps=16, 
+        action=:fill, 
         colors=nothing)
 
 Draw the hyperbolic tiling by drawing every hyperpolygon in
@@ -489,8 +523,7 @@ drawing points.
 function draw_tiling(tiles;
         radius::Real = DEFAULT_DISK_RADIUS,
         diskcenter::Point = O,
-        action::Symbol = :fill, 
-        steps::Int = 16, 
+        action::Symbol = :fill,
         colors = nothing
     )
     for (vertices, generation) in tiles
@@ -502,8 +535,7 @@ function draw_tiling(tiles;
         hyperbolic_poly(vertices; 
             radius = radius, 
             diskcenter = diskcenter, 
-            action = action, 
-            steps = steps)
+            action = action)
     end
     return
 end

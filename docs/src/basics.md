@@ -305,7 +305,6 @@ You'll need to use this keyword to specify the radius of the Poincaré disk if y
 - `radius=DEFAULT_DISK_RADIUS`
 - `diskcenter=O`
 - `action=:stroke`
-- `steps=40`
 
 The utility function [`regular_hyperbolic_poly()`](@ref) generates a regular hyperbolic polygon, inside a hyperbolic circle of a given radius.
 
