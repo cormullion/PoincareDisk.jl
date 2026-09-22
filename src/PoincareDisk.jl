@@ -276,6 +276,19 @@ function hyperbolic_circle(
     return cc, r
 end
 
+# return the BoundingBox of the current path's extents
+function _currentpathboundingbox()
+    dx1 = Cdouble[0]
+    dx2 = Cdouble[0]
+    dy1 = Cdouble[0]
+    dy2 = Cdouble[0]
+    ccall((:cairo_path_extents, Luxor.Cairo.libcairo),
+        Nothing, (Ptr{Nothing}, Ptr{Cdouble}, Ptr{Cdouble},
+            Ptr{Cdouble}, Ptr{Cdouble}),
+        Luxor._get_current_cr().ptr, dx1, dy1, dx2, dy2)
+    return BoundingBox(Point(dx1[1], dy1[1]), Point(dx2[1], dy2[1]))
+end
+
 """
     hyperbolic_poly(vertices; 
         radius=DEFAULT_DISK_RADIUS, 
@@ -290,7 +303,8 @@ circular arc or straight line, giving a chain of
 Finally apply the Luxor action `action` to the resulting path.
 The default is `:stroke`.
 
-Return `nothing`.
+Return the BoundingBox of the extents of the 
+path defining hyperbolic polygon.
 
 The unique circle orthogonal to the unit circle that passes
 through `a` and `b` also passes through `a* = 1/conj(a)`,
@@ -333,8 +347,9 @@ function hyperbolic_poly(
     end
 
     closepath()
+    bbx = _currentpathboundingbox()
     do_action(action)
-    return nothing
+    return bbx
 end
 
 """
