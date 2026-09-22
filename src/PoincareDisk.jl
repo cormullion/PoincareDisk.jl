@@ -16,11 +16,11 @@ export hyperbolic_line,
 
 # default radius of the unit disk
 # this is slightly smaller than the default Luxor drawing
-# width (600 × 600), so that it fits automatically
+# width (600 × 600), so that it fits nicely
 const DEFAULT_DISK_RADIUS = 295.0
 
 """
-    complex_to_point(z; radius=DEFAULT_DISK_RADIUS, diskcenter=O)
+    complex_to_point(z; radius=DEFAULT_DISK_RADIUS, diskcenter::Point=O)
 
 Convert a point `z` on the unit disk (a complex number with
 |z| < 1) into a `Point` on the Luxor drawing, scaling by
@@ -50,29 +50,28 @@ function point_to_complex(
 end
 
 """
-    mobius_to_origin(z, az)
+    mobius_to_origin(z, a)
 
 Apply a Möbius transformation that maps the unit disk to
 itself. This "recenters" the disk so that the point
 `a` moves to the origin 0 while everything stays inside the
 unit disk. Angles are preserved. 
 """
-
 function mobius_to_origin(z, a)
     return (Complex(z) - a) / (1 - conj(a) * Complex(z))
 end
 
 """
-    mobius_from_origin(wz, az)
+    mobius_from_origin(w, a)
 
-Find the inverse of the `mobius_to_origin()` function: ie. send `0` to `a`.
+Find the inverse of the `mobius_to_origin()` function: ie send `0` to `a`.
 """
 function mobius_from_origin(w, a)
     return (Complex(w) + a) / (1 + conj(a) * Complex(w))
 end
 
 """
-    hyperbolic_distance(az, bz)
+    hyperbolic_distance(a, b)
 
 Find the hyperbolic distance between two points on the Poincaré disk.
 """
@@ -83,10 +82,10 @@ end
 """
     _geodesic_arc_info(a, b; radius=DEFAULT_DISK_RADIUS, diskcenter=O)
 
-Build the hyperbolic geodesic that joins disk
+Build the hyperbolic geodesic that passes through disk
 points `a` and `b`. It can either be a circular arc or a
-straight line. THe straight line case happens when  `a` and `b`
-form a diagonal.
+straight line - which happens when `a` and `b`
+form a diameter.
 
 Returns one of three different results:
 
@@ -102,8 +101,8 @@ non-excluded arc runs *clockwise* from `theta1` to
 `theta2`.
 
 - `(:line, p1, p2)` — `a`, `b`, and the origin are
-  collinear, so the geodesic is just the straight line
-  segment between the points `p1` and `p2`.
+  collinear, so the geodesic is just a straight line
+  between the points `p1` and `p2`.
 
 The unique circle orthogonal to the unit circle that passes
 through `a` and `b` also passes through `a* = 1/conj(a)`,
@@ -126,7 +125,13 @@ function _geodesic_arc_info(
     p1 = complex_to_point(a; radius = radius, diskcenter = diskcenter)
     p2 = complex_to_point(b; radius = radius, diskcenter = diskcenter)
 
-    # a, b and 0 collinear - geodesic is a diameter (straight line)
+    # are a, b, and the 0 are collinear? When they are,
+    # the geodesic between them lies along a full diameter
+    # line of the disk (a straight line through the center,
+    # extended to the boundary in both directions). 
+    # In the Poincaré disk model hyperbolic geodesics are
+    # either "diameters" or arcs of circles orthogonal to the
+    # boundary
     if abs(imag(conj(a) * b)) < 1.0e-9
         return (:line, p1, p2)
     end
@@ -160,8 +165,8 @@ end
         diskcenter=O, 
         action=:stroke)
 
-Draw the boundary circle of the Poincaré disk itself. The default
-Luxor action is `:stroke`.
+Construct the boundary circle of the Poincaré disk itself. The default
+Luxor action used here is `:stroke`, or you could use, eg, `:fill`.
 """
 function draw_poincare_disk(;
         radius::Real = DEFAULT_DISK_RADIUS, diskcenter::Point = O,
@@ -176,8 +181,8 @@ end
         dotradius = 5, 
         diskcenter=O)
 
-Draw the hyperbolic point at complex number `z` using a
-filled circle of `dotradius` units.
+Draw a small filled circle of radius `dotradius` to 
+mark the location of the hyperbolic point at complex number `z`.
 Return the coordinates of the Luxor point.
 """
 function hyperbolic_point(
@@ -197,11 +202,13 @@ end
         diskcenter=O, 
         action=:stroke)
 
-Construct a new path that makes the hyperbolic geodesic line
+Construct a new path that makes the hyperbolic geodesic
 between disk points `z1` and `z2` as a circular arc (or a
-straight line, if they make a diameter) and apply `action`.
+straight line, if collinear).
 
-Return the `(center, radius)` of a circle that contains
+Then the `action` is applied. The default action is `:stroke`.
+
+Returns either the `(center, radius)` of a circle that would contain
 the arc, or `(nothing, nothing)` if it's a diameter.
 """
 function hyperbolic_line(z1, z2; 
@@ -237,9 +244,10 @@ end
         action=:stroke)
 
 Construct the hyperbolic circle of hyperbolic radius `rho`
-centered at disk point `center`. The `action` is applied.
+centered at disk point `center`. The `action` (default `:stroke`) 
+is applied.
 
-Return the Luxor coordinates of the center and radius.
+Return the Luxor coordinates of the circle's center and radius.
 """
 function hyperbolic_circle(
         center, rho; radius::Real = DEFAULT_DISK_RADIUS,
@@ -275,12 +283,12 @@ end
         action=:stroke)
 
 Construct the closed hyperbolic polygon with `vertices`,
-joined by geodesic edges. Each edge is drawn as an exact
-circular arc (or straight line, for diameter edges) rather
-than a sequence of sampled points, by chaining Luxor
-`arc`/`carc`/`line` path segments together.
+joined by geodesic edges. Each side is built with a
+circular arc or straight line, giving a chain of
+`arc`/`carc`/`line` path elements.
 
-Apply the Luxor action `action` to the resulting path.
+Finally apply the Luxor action `action` to the resulting path.
+The default is `:stroke`.
 
 Return `nothing`.
 
@@ -302,7 +310,7 @@ function hyperbolic_poly(
     )
     verts = Complex.(vertices)
     m = length(verts)
-    m < 3 && error("a polygon needs at least 3 vertices")
+    m < 3 && error("hyperbolic_poly(): a polygon needs at least 3 vertices")
 
     newpath()
     firstpoint = complex_to_point(verts[1]; radius = radius, diskcenter = diskcenter)
@@ -352,11 +360,11 @@ end
 """
     geodesic_support(a, b)
 
-The circle (or line) supporting a geodesic through disk
-points `a`, `b`. 
+The circle or line supporting a geodesic through disk
+points `a` and `b`. 
 
 Returns `(:diameter, theta, 0.0)` for a diameter at angle
-`theta`, or `(:circle, center, r)` for the orthogonal circle.
+`theta`, or `(:circle, center, r)` for a circle.
 """
 function geodesic_support(a, b)
     a, b = Complex(a), Complex(b)
@@ -411,7 +419,7 @@ end
         rotation = 0.0, 
         maxtiles = 4000)
 
-Construct the coordinates for a hyperbolic tiling of the Poincaré disk,
+Construct the coordinates for a hyperbolic tiling of the Poincaré disk
 with polygons with `p` sides and `q` lines joining at each vertex.
 
 Returns an array where each element contains:
@@ -420,10 +428,10 @@ Returns an array where each element contains:
 
 - the tile's generation number: `depth` specifies how many generations 
 
-`maxtiles` tiles limits the number of tiles.
+`maxtiles` tiles limits the number of tiles generated.
 
-`p` and `q` must satisfy `1/p + 1/q < 1/2` (the hyperbolic condition). 
-Most of the simpler tilings are listed in this table:
+`p` and `q` must satisfy `1/p + 1/q < 1/2`. 
+The simpler tilings are listed in this table:
 
 | p:q | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -507,15 +515,18 @@ end
         action=:fill, 
         colors=nothing)
 
-Draw the hyperbolic tiling by drawing every hyperpolygon in
-the array of tiles produced by `hyperbolic_tiling()`.
+Draw the hyperbolic tiling produced by `hyperbolic_tiling()`
+by drawing every hyperpolygon in the array of tiles, using the provided
+colors.
 
-Apply `action` when drawing each tile. The default is `:fill`.
+Apply Luxor `action` to the path that describes each tile. The default is `:fill`.
 
-`colors` can be supplied as an array of two colorants. This
-will use generation number of each tile to flip between the
-two colours. If `q` is even, the tiling has a "chess board"
-appearance. Otherwise a random colour is used.
+`colors` can be supplied as an array of two colorants. 
+The generation number of each tile is used to alternate
+between the two colours. If `q` is even, the tiling has a "chess board"
+appearance. 
+
+Otherwise random colors are used.
 
 Use `radius` to specify the radius of the Poincaré disk when
 drawing points.
@@ -537,7 +548,7 @@ function draw_tiling(tiles;
             diskcenter = diskcenter, 
             action = action)
     end
-    return
+    return nothing
 end
 
 end

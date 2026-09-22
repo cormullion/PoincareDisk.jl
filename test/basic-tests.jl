@@ -24,24 +24,20 @@ end
     z5 = -0.85 - 0.15im
     z6 = 0.8 - 0.05im
     R = 200
-    h1 = hyperbolic_line(z1, z2; radius = R)
-    h2 = hyperbolic_line(z3, z4; radius = R)
-    h3 = hyperbolic_line(z5, z6; radius = R)
 
-    @test length(h1) == 2
-    @test length(h2) == 60
-    @test length(h3) == 60
+    res1 = hyperbolic_line(z1, z2; radius = R)
+    res2 = hyperbolic_line(z3, z4; radius = R)    
+    res3 = hyperbolic_line(z5, z6; radius = R) 
+
+    @test first(res1) == nothing
+    @test last(res1) == nothing
+
 
     # hyperbolic_circle()
     z = cis(0.2) / 2
     a1, a2 = hyperbolic_circle(z, 0.2)
     @test isapprox(a1, Point(121.37, 6.97), atol = 0.1)
     @test isapprox(a2, Point(165.58, 51.19), atol = 0.1)
-
-    # hyperbolic_poly()
-    hp = hyperbolic_poly([z1, z2, z3, z4, z5, z6])
-    @test length(hp) == 159
-    @test hp[1] == Point(0.0, 0.0)
 
     # hyperbolic_distance()
     @test isapprox(hyperbolic_distance(z1, z2), 2.36124, atol = 0.01)
@@ -111,7 +107,7 @@ end
     @test isapprox(pd[1], Point(-295, -295))
     @test isapprox(pd[2], Point(295, 295))
     tiles = hyperbolic_tiling(3, 7)
-    draw_tiling(tiles, steps = 20)
+    draw_tiling(tiles)
     @test finish() == true
     preview()
 
