@@ -45,7 +45,5 @@ jobs:
       - uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          codecov:  
-              token: 1deef452-0c31-449f-8ddc-94ec0fa12e49
           fail_ci_if_error: false
           files: lcov.info
