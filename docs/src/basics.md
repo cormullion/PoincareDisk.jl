@@ -36,8 +36,6 @@ d # hide
 
     Famous French mathematician and physicist Henri Poincaré (1854–1912) popularized the hyperbolic disk model in 1905 and it now carries his name. However, it was really a rediscovery of the original work of Eugenio Beltrami some decades earlier.
 
-## Overview
-
 Points on the Poincaré disk are represented as complex numbers `z`, where `|z| < 1`.
 
 The disk is a *unit disk*, with `(0 + 0im)` at the center. The fourcardinal points (E, S, W, and N) are:
@@ -172,6 +170,34 @@ end
 ```
 
 The `complex_to_point(z)` function converts from disk coordinates to Luxor drawing coordinates, so we can draw a circular dot using `Luxor.circle()` to mark the end point.
+
+Here's another line-drawing example.
+
+```@example
+using PoincareDisk
+using Luxor
+using Colors
+
+@drawsvg begin
+    draw_poincare_disk(action = :fill)
+    sethue("white")
+    setline(5)
+    R = 0.99
+    for θ in logrange(π / 30, π / 2, length = 50)
+        sethue(HSV(360rescale(θ, 0, π / 2), 0.8, 0.8))
+        z1 = R * cis(π / 2 + θ)
+        z2 = R * cis(π / 2 - θ)
+        hyperbolic_line(z1, z2)
+    end
+    setline(1)
+    sethue("white")
+    for θ in range(π / 30, π, length = 30)
+        z1 = R * cis(θ)
+        z2 = R * cis(-θ)
+        hyperbolic_line(z1, z2)
+    end
+end
+```
 
 ## Hyperbolic circles
 
@@ -344,4 +370,55 @@ using Luxor
         end
     end
 end 
+```
+
+## Trees
+
+In this example, a recursive function draws a tree in hyperbolic space. The origin is placed off-center just to exploit the hyperbolic distortion better.
+
+This uses two functions that do Möbius transformations: 
+
+- `mobius_to_origin(a, z)`: moves `a` to the center (0), then return where `z` ends up with the same transformation
+
+- `mobius_from_origin(w, a)`: inverse of the `mobius_to_origin()` function, map 0 to `a`
+
+```@example
+using Luxor
+using PoincareDisk
+using Colors
+
+function build_tree!(node::ComplexF64, parent, depth::Int;
+        branches = 12)
+    depth == MAXDEPTH && return  
+    if parent === nothing
+        directions = range(0, 2π - 2π/branches, length = branches)  
+    else
+        # recenter the disk on `node` 
+        local_parent = mobius_to_origin(parent, node)
+        # face the opposite way to create new branch directions
+        away = angle(local_parent) + π
+        # reduce branch angles as we get further away from origin
+        directions = away .+ range(-π, π, length = branches) ./ branches
+    end
+    setblend(blend(O, 0, O, 300, "orange", "cyan"))
+    for theta in directions
+        # calculat step length and next point
+        # in node's local frame 
+        local_child = rescale(depth, 1, MAXDEPTH, 0.6, 0.8) * cis(theta)
+        # map back to the disk
+        child = ComplexF64(mobius_from_origin(local_child, node))  
+        # draw geodesic edge
+        setline(rescale(depth, 1, MAXDEPTH, 6, 0.2))
+        hyperbolic_line(node, child)                           
+        build_tree!(child, node, depth + 1, branches=branches)
+    end
+    return
+end
+
+const MAXDEPTH = 3
+@drawsvg begin
+    sethue("grey20")
+    draw_poincare_disk(action = :fill)
+    build_tree!(0.2 + 0.2im, nothing, 0, branches = 5)
+end
 ```

@@ -12,7 +12,9 @@ export hyperbolic_line,
     complex_to_point,
     point_to_complex,
     hyperbolic_distance,
-    regular_hyperbolic_poly
+    regular_hyperbolic_poly,
+    mobius_to_origin,
+    mobius_from_origin
 
 # default radius of the unit disk
 # this is slightly smaller than the default Luxor drawing
@@ -52,10 +54,16 @@ end
 """
     mobius_to_origin(z, a)
 
-Apply a Möbius transformation that maps the unit disk to
-itself. This "recenters" the disk so that the point
-`a` moves to the origin 0 while everything stays inside the
-unit disk. Angles are preserved. 
+    
+Apply a Möbius transformation of the unit disk that moves
+the point `a` to the center (0), and returns where `z` ends
+up once the whole disk has been "recentered" on `a`.
+
+This mappin is a hyperbolic isometry (a "translation" of the
+hyperbolic plane) that preserves hyperbolic distances and
+angles, and maps geodesics to geodesics.
+
+Euclidean sizes are not preserved. Angles are preserved.
 """
 function mobius_to_origin(z, a)
     return (Complex(z) - a) / (1 - conj(a) * Complex(z))
@@ -64,7 +72,7 @@ end
 """
     mobius_from_origin(w, a)
 
-Find the inverse of the `mobius_to_origin()` function: ie send `0` to `a`.
+Find the inverse of the `mobius_to_origin()` function: ie map `0` to `a`.
 """
 function mobius_from_origin(w, a)
     return (Complex(w) + a) / (1 + conj(a) * Complex(w))

@@ -29,8 +29,7 @@ end
 
 - an array of complex coordinates for the hyperbolic polygon for this tile
 
-- a generation number (an integer), which is 
-in effect a record of when this tile was generated during the tile-construction process
+- a generation number (an integer), which is in effect a record of when this tile was generated during the tile-construction process
 
 The `hyperbolic_tiling()` function has a few keyword options:
 
@@ -76,8 +75,7 @@ The 'simplest' available tiling is `(3, 7)`, such that 7 lines connect at each o
 
 # More examples
 
-This example uses the bounding box of the hyperbolic polygon's path to place the text
-showing the tile generation number.
+This example uses the bounding box of the hyperbolic polygon's path to place the text showing the tile generation number.
 
 ```@example
 using PoincareDisk
@@ -120,6 +118,27 @@ finish()
 preview()
 ```
 
+This simple example divides each 4-cornered tile into two triangles:
+
+```@example
+using PoincareDisk
+using Luxor
+using Colors
+
+@drawsvg begin
+    draw_poincare_disk(action = :fill)
+    tiles = hyperbolic_tiling(4, 5, depth = 7)
+    setline(2)
+    for (tile, g) in tiles # don't need generation
+        c1, c2, c3, c4 = tile
+        isodd(g) ? sethue("black") : sethue("white")
+        hyperbolic_poly([c1, c2, c3], action = :fill)
+        !isodd(g) ? sethue("black") : sethue("white")
+        hyperbolic_poly([c1, c3, c4], action = :fill)
+    end
+end
+```
+
 The `hyperbolic_poly()` function returns the Luxor coordinates for the tile's border, and the default for the `:action` keyword is `:stroke`. So if you want something other than a simple stroke/fill, pass `action=:none` and use the returned points instead.
 
 !!! note
@@ -150,7 +169,7 @@ function blend_render(bbx, color::Luxor.Colorant;
             lighten(color, 0.7),
         )
     )
-    fillpreserve()
+    do_action(action)
     sethue("white")
     strokepath()
     return
@@ -169,7 +188,6 @@ for (tile, _) in tiles
     sethue(Oklch(0.5, 0.3, rand(1:360)))
     bbx = hyperbolic_poly(tile, radius=500, action=:path)
     blend_render(bbx, getcolor(), action=:fillpreserve)
-
 end
 finish()
 preview()
