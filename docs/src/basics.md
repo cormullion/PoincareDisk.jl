@@ -4,9 +4,9 @@ This package lets you draw hyperbolic geometry using the Poincaré disk model.
 
 ## The Poincaré disk
 
-The Poincaré disk is a two-dimensional hyperbolic plane. It provides a surface on which you can draw using *non-Euclidean geometry*. All 2D points are mapped to a unit disk, with all points lying inside it. At the boundary of the circle lies infinity. Here, most of Euclid's geometric postulates apply, but the final (fifth, "parallel") postulate doesn't. You'll have no trouble finding explanatory material on the internet!
+The Poincaré disk is a two-dimensional space with hyperbolic geometry. It provides a surface on which you can draw using *non-Euclidean geometry*, where all 2D points are mapped to a unit disk and lie inside it. The boundary of the circle is infinity. In the Poincaré disk, Euclid's geometric postulates apply except the final (fifth, "parallel") postulate. You'll have no trouble finding explanatory material on the internet!
 
-In the Poincaré disk model, the shortest path between two points is drawn as a circular arc called a *geodesic*. The internal angles of triangles add up to less than 180°. Hyperbolic circles are represented as Euclidean circles contained entirely inside the disk.
+In the Poincaré disk model, the shortest path between two points is drawn as a circular arc called a *geodesic*. The internal angles of triangles add up to less than 180°. Hyperbolic circles are represented as Euclidean circles contained entirely inside the disk. Hyperbolic lines that pass through the origin lie on the diameter of the disk, and can be represented as straight lines (arcs of infinite radius).
 
 ```@setup example
 using PoincareDisk
@@ -36,14 +36,15 @@ d # hide
 
     Famous French mathematician and physicist Henri Poincaré (1854–1912) popularized the hyperbolic disk model in 1905 and it now carries his name. However, it was really a rediscovery of the original work of Eugenio Beltrami some decades earlier.
 
-Points on the Poincaré disk are represented as complex numbers `z`, where `|z| < 1`.
-
-The disk is a *unit disk*, with `(0 + 0im)` at the center. The fourcardinal points (E, S, W, and N) are:
+The disk is a *unit disk*, with `(0 + 0im)` at the center.
+Points are represented as complex numbers `z`, where `|z| < 1` The four cardinal points (E, S, W, and N) are:
 
 - `1.0 + 0.0im`
 - `0 + 1.0im`
 - `-1.0 + 0.0im`
 - `0 - 1.0im`
+
+these lie on the boundary for the disk, at infinity.
 
 ```@example
 using PoincareDisk
@@ -65,6 +66,10 @@ using Luxor
 end
 ```
 
+!!! note
+
+    We can't draw these four points on the Poincaré disk, since they're outside, on the boundary. So we converted them to Luxor points first.
+
 In this package, the important functions are:
 
 - [`hyperbolic_point()`](@ref)
@@ -77,16 +82,16 @@ In this package, the important functions are:
 - [`complex_to_point()`](@ref)
 - [`point_to_complex()`](@ref)
 
-All 2D graphics functions are provided by Luxor.jl, which you should probably add to the environment (`using Luxor`),and you can find the documentation for that package [here](https://juliagraphics.github.io/LuxorManual/).
+All 2D graphics functions are provided by Luxor.jl, which you should add to the environment (and include with `using Luxor`). You can find the documentation for Luxor [here](https://juliagraphics.github.io/LuxorManual/).
 
 The Luxor.jl method of supplying an *action* to a drawing function, such as `:stroke` or `:fill`, is used here.
 
 ## Hyperbolic points
 
-The [`hyperbolic_point(z)`](@ref) function draws a small circle on the current drawing to represent the location of
-a hyperbolic point at complex coordinate `z`.
+The [`hyperbolic_point(z)`](@ref) function draws a small circle
+on the current drawing to represent the location of the hyperbolic point at complex coordinate `z`.
 
-This function has a `dotradius` keyword that determines the radius of the Luxor circle used to mark the position. All other graphic properties such as color are as set in Luxor.jl *before* you call the function.
+This function has a `dotradius` keyword (default is 5) that determines the radius of the Luxor circle used to mark the position. All other graphic properties such as color are as set in Luxor.jl *before* you call the function.
 
 The next example draws points on the disk using the form `center + radius * θ`. 
 
@@ -138,7 +143,7 @@ You can add graphics for the Poincaré disk itself with:
 
 [`draw_poincare_disk(;action=:fill)`](@ref)
 
-The size of the disk, on a Luxor drawing, is determined by the global constant `DEFAULT_DISK_RADIUS`, which is initially set to 295.0 (so that the Poincare disk fits neatly on the default Luxor drawing size of 600 × 600). The default action is `:stroke`; you can draw a filled disk with `action=:fill`.
+The size of the disk, on a Luxor drawing, is determined by the global constant `DEFAULT_DISK_RADIUS`, which is initially set to 295.0 (so that the Poincare disk fits neatly on the default Luxor drawing size of 600 × 600). The default action is `:stroke`; you can draw a filled disk in the current color with `action=:fill`.
 
 ## Hyperbolic lines
 
@@ -146,7 +151,7 @@ Use `hyperbolic_line(z1, z2)` to construct a hyperbolic line between `z1` and `z
 
 These lines are called *geodesics*, which are arcs of circles that would if extended meet the edge of the unit circle at right angles.
 
-The default action is `:stroke`. `:fill` is not very useful here, but `:path` would allow you to obtain the path for later use. The function returns either the information for the supporting circle `(centerpoint, radius)`, or `(nothing, nothing)` if the geodesic is not part of a circle at all (it lies on a diameter).
+The default action is `:stroke`. `:fill` is not very useful here, but `:path` would allow you to obtain the path for later use. The function returns either the information for the supporting circle `(centerpoint, radius)`, or `(nothing, nothing)` if the geodesic is not part of a circle (ie the line lies on a diameter of the disk).
 
 In the next example, each hyperbolic line starts near the bottom edge (at `z1 = Complex(0, 0.999999)`) and reaches to each of the positions around the edge generated by the loop. The `Colors.Oklch` function generates a pleasing set of shades.
 
@@ -201,7 +206,7 @@ end
 
 ## Hyperbolic circles
 
-The `hyperbolic_circle(zc, rho)` function constructs a hyperbolic circle of hyperbolic radius `rho` centered at the disk point `zc`. 
+The `hyperbolic_circle(zc, rho)` function constructs a hyperbolic circle of radius `rho` centered at the disk point `zc`. 
 
 Hyperbolic circles are ordinary Euclidean circles, but the actual center/radius differs from the hyperbolic center/radius. 
 
@@ -253,7 +258,7 @@ end
 
 The `hyperbolic_poly()` function constructs a hyperbolic polygon and adds it to the current drawing as a Luxor path. Each side of the polygon is a geodesic curve. The default action is `:stroke`.
 
-This function expects an array of the corners of the polygon, as complex number coordinates. 
+This function expects an array of the corners of the polygon, as complex number coordinates. It returns the Luxor BoundingBox of the extents of the path enclosing it.
 
 In the next example, we generate arrays of three random positions on the edge of the disk. Each path is filled and then stroked with white.
 
@@ -274,7 +279,6 @@ Random.seed!(62)
         push!(z, 0.99cis(rand() * π))
         push!(z, 0.99cis(rand() * 3π / 2))
         push!(z, 0.99cis(rand() * 2π))
-        Random.shuffle!(z)
         randomhue()
         hyperbolic_poly(z, action = :fillpreserve)
         sethue("white")
@@ -308,7 +312,8 @@ using Colors # hide
                     polargrid[r, c + 1],
                     polargrid[r + 1, c + 1],
                     polargrid[r + 1, c]
-                hyperbolic_poly([p1, p2, p3, p4], action = :fill)
+                hyperbolic_poly([p1, p2, p3, p4], 
+                    action = :fill)
             end
         end
     end
@@ -374,9 +379,9 @@ end
 
 ## Trees
 
-In this example, a recursive function draws a tree in hyperbolic space. The origin is placed off-center just to exploit the hyperbolic distortion better.
+In this example, a recursive function draws a tree in hyperbolic space. The origin is placed off-center just to enhance the hyperbolic distortion.
 
-This uses two functions that do Möbius transformations: 
+This uses two built-in functions that do Möbius transformations: 
 
 - `mobius_to_origin(a, z)`: moves `a` to the center (0), then return where `z` ends up with the same transformation
 
@@ -421,4 +426,92 @@ const MAXDEPTH = 3
     draw_poincare_disk(action = :fill)
     build_tree!(0.2 + 0.2im, nothing, 0, branches = 5)
 end
+```
+
+## Farey sequence
+
+The rational numbers on the boundary correspond to the *Farey sequence*, which is a collection of reduced fractions between 0 and 1. This example uses Luxor's `textplace()` function to approximate the look of decent fractions. Ideally you'd be using ``\LaTeX`` or Typst to make them look nice.
+
+```@example
+using PoincareDisk
+using Luxor
+using LinearAlgebra
+using Colors
+
+"""
+Convert `z` on the boundary of the Poincaré disk to its corresponding Farey fraction.
+"""
+function vertex_to_farey(z; tol::Float64 = 1.0e-11)
+    # on the boundary?
+    if abs(abs(z) - 1.0) > tol
+        @warn "Warning: Vertex \$z is not on the boundary of the Poincaré disk."
+    end
+
+    # point maps to infinity (z = 1)
+    if abs(z - 1.0) < tol
+        return rationalize(1 / 0)
+    end
+
+    # Cayley transform
+    τ = im * (1.0 + z) / (1.0 - z)
+    real_val = real(τ)
+    return rationalize(Int, real_val, tol = tol)
+end
+
+function poinfarey()
+    Drawing(600, 600, :svg)
+    origin()
+    background("black")
+    sethue("grey15")
+    draw_poincare_disk(action = :fill, radius = 230)
+    tiles = hyperbolic_tiling(4, 50000, depth = 3)
+    setline(1.5)
+    sethue("gold")
+    for (tile, g) in tiles
+        hyperbolic_poly(tile, action = :stroke, radius = 230)
+        for vertex in tile
+            pt = complex_to_point(vertex, radius = 230)
+            sl = slope(O, pt)
+            if g >= 3
+                rat = vertex_to_farey(vertex, tol = 0.001)
+                offsetpoint = polar(245, sl)
+                fsize = 8
+                if sign(rat.num) >= 0
+                    textplace(
+                        string(rat.num, "_", rat.den), offsetpoint,
+                        [
+                            (
+                                size = fsize, advance = false,
+                                face = "TimesRoman",
+                                color = colorant"white",
+                            ),
+                            (size = 2fsize, shift = -3, advance = false, kern = -2), # 'fraction bar'
+                            (size = fsize, shift = -15, advance = false),
+                        ]
+                    )
+                else
+                    textplace(
+                        string(rat.num, "_", rat.den), offsetpoint,
+                        [
+                            (
+                                size = fsize,
+                                face = "JuliaMono-Light",
+                                color = colorant"white",
+                            ),
+                            (
+                                advance = false,
+                            ),
+                            (size = 2fsize, shift = -3, advance = false, kern = -2), # 'fraction bar'
+                            (size = fsize, shift = -15, advance = false),
+                        ]
+                    )
+                end
+            end
+        end
+    end
+    finish()
+    return preview()
+end
+
+poinfarey()
 ```
